@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	Language             string `json:"language"`               // "auto", "en", "ru"
 	VPNType              string `json:"vpn_type"`               // "rasdial", "wireguard", "openvpn"
 	VPNName              string `json:"vpn_name"`               // Имя подключения в Windows или имя туннеля
 	CheckIntervalSeconds int    `json:"check_interval_seconds"` // Частота проверки статуса (сек)
@@ -17,8 +18,6 @@ type Config struct {
 	EnableNotifications  bool   `json:"enable_notifications"`   // Показывать ли всплывающие уведомления
 	WireGuardConfigPath  string `json:"wireguard_config_path"`  // Путь к .conf файлу для WireGuard
 	OpenVPNProfileName   string `json:"openvpn_profile_name"`   // Имя профиля для OpenVPN GUI
-	DonateURL            string `json:"donate_url"`             // Ссылка для поддержки автора
-	ReferralURL          string `json:"referral_url"`           // Партнерская ссылка на хостинг/VPS
 }
 
 var (
@@ -33,6 +32,7 @@ func getDefaultConfig(detectedVPN string) Config {
 	}
 
 	return Config{
+		Language:             "auto",
 		VPNType:              "rasdial",
 		VPNName:              targetVPN,
 		CheckIntervalSeconds: 5,
@@ -42,8 +42,6 @@ func getDefaultConfig(detectedVPN string) Config {
 		EnableNotifications:  true,
 		WireGuardConfigPath:  "",
 		OpenVPNProfileName:   "",
-		DonateURL:            "https://boosty.to",
-		ReferralURL:          "https://timeweb.cloud",
 	}
 }
 
@@ -80,6 +78,9 @@ func loadOrCreateConfig(detectedVPN string) (Config, error) {
 	}
 
 	// Fallback defaults for missing fields
+	if cfg.Language == "" {
+		cfg.Language = "auto"
+	}
 	if cfg.CheckIntervalSeconds <= 0 {
 		cfg.CheckIntervalSeconds = 5
 	}
@@ -92,12 +93,10 @@ func loadOrCreateConfig(detectedVPN string) (Config, error) {
 	if cfg.VPNType == "" {
 		cfg.VPNType = "rasdial"
 	}
-	if cfg.DonateURL == "" {
-		cfg.DonateURL = "https://boosty.to"
-	}
-	if cfg.ReferralURL == "" {
-		cfg.ReferralURL = "https://timeweb.cloud"
-	}
+
+	// Save back cleaned config (removing old donate/referral keys if present)
+	cleanedData, _ := json.MarshalIndent(cfg, "", "  ")
+	_ = os.WriteFile(cfgPath, cleanedData, 0644)
 
 	return cfg, nil
 }

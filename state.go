@@ -14,15 +14,16 @@ const (
 )
 
 func (s AppState) String() string {
+	m := T()
 	switch s {
 	case StateConnected:
-		return "Подключен (Автоконтроль)"
+		return m.StatusConnected
 	case StateReconnecting:
-		return "Переподключение..."
+		return m.StatusReconnecting
 	case StatePaused:
-		return "Пауза (Ручной режим)"
+		return m.StatusPaused
 	default:
-		return "Неизвестно"
+		return "Unknown"
 	}
 }
 

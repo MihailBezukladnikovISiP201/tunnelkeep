@@ -52,10 +52,12 @@ func main() {
 		cfg.AutoConnectAtStart = true
 	}
 
+	initI18n(cfg.Language)
+
 	adapter := NewVPNAdapter(cfg)
 
 	logger.Logf("=== Запуск VPN Guardian v1.0.0 ===")
-	logger.Logf("Адаптер: [%s], Имя/Цель: [%s], Проверка каждые: %d сек", cfg.VPNType, adapter.Name(), cfg.CheckIntervalSeconds)
+	logger.Logf("Язык интерфейса: [%s], Адаптер: [%s], Имя/Цель: [%s]", currentLang, cfg.VPNType, adapter.Name())
 	logger.Logf("Конфигурация: %s", getConfigPath())
 
 	iconMgr, err := newIconManager()
@@ -126,9 +128,10 @@ func runWatchdog(adapter VPNAdapter, cfg Config, stateMgr *StateManager, tray *T
 			continue
 		}
 
+		m := T()
 		// VPN connection dropped unexpectedly
 		appLogger.Logf("ВНИМАНИЕ: Обнаружен разрыв соединения с VPN [%s]!", adapter.Name())
-		tray.ShowBalloon("VPN Guardian", fmt.Sprintf("Обрыв связи с %s. Запуск восстановления...", adapter.Name()), true)
+		tray.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonConnDropped, adapter.Name()), true)
 
 		reconnected := false
 		for attempt := 1; attempt <= maxRetries; attempt++ {
@@ -147,7 +150,7 @@ func runWatchdog(adapter VPNAdapter, cfg Config, stateMgr *StateManager, tray *T
 				if isUp, _ := adapter.IsConnected(); isUp {
 					appLogger.Logf("VPN [%s] успешно переподключен (попытка %d)!", adapter.Name(), attempt)
 					stateMgr.SetConnected()
-					tray.ShowBalloon("VPN Guardian", "Связь с "+adapter.Name()+" успешно восстановлена!", false)
+					tray.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonReconnected, adapter.Name()), false)
 					reconnected = true
 					break
 				}
@@ -158,7 +161,7 @@ func runWatchdog(adapter VPNAdapter, cfg Config, stateMgr *StateManager, tray *T
 
 		if !reconnected && !stateMgr.IsPaused() {
 			appLogger.Logf("Не удалось восстановить связь после %d попыток. Переход в паузу.", maxRetries)
-			tray.ShowBalloon("VPN Guardian", fmt.Sprintf("Не удалось восстановить связь с %s после %d попыток. Автоконтроль приостановлен.", adapter.Name(), maxRetries), true)
+			tray.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonRetriesFail, adapter.Name(), maxRetries), true)
 			stateMgr.SetPaused(time.Time{})
 		}
 	}

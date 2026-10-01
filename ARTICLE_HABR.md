@@ -70,7 +70,7 @@ func extractFirstPbkSection(path string) string {
 * **Zero CGO:** чистый Go без зависимостей от GCC/MinGW, прямые системные вызовы Win32 API.
 * **Отказоустойчивость:** подписка на системное событие `TaskbarCreated` гарантирует, что иконка в трее не пропадет при перезапуске `explorer.exe`.
 
-Настройки хранятся в `%APPDATA%\VPNGuardian\config.json` и открываются в 1 клик прямо из трея. Помимо штатного Windows VPN, архитектура также поддерживает WireGuard и OpenVPN.
+Настройки хранятся в `%APPDATA%\VPNGuardian\config.json` и открываются в 1 клик прямо из трея. Помимо штатного Windows VPN, архитектура также поддерживает WireGuard и OpenVPN, а также автоопределение системного языка (русский / английский).
 
 ---
 
@@ -87,5 +87,4 @@ func extractFirstPbkSection(path string) string {
 
 Если утилита избавила вас от рутины и сэкономила нервы:
 * Буду признателен за звезду ⭐ проекту на [GitHub](https://github.com/MihailBezukladnikovISiP201/vpn-guardian)!
-* Поддержать развитие проекта можно на [Boosty](https://boosty.to) / [CloudTips].
-* А для личных удаленных серверов рекомендую [Timeweb Cloud](https://timeweb.cloud) — разворачивает быстрый сервер в нужной локации за пару кликов.
+* Делитесь в комментариях своим опытом организации удаленной работы через VPN на корпоративных устройствах.

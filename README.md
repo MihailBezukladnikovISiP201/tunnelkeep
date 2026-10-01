@@ -6,83 +6,88 @@
 [![Permissions](https://img.shields.io/badge/Permissions-Non--Admin%20%2F%20User%20Space-success)](#)
 [![Architecture](https://img.shields.io/badge/Arch-amd64%20%7C%20386%20%7C%20arm64-brightgreen)](#)
 
-> **VPN Guardian** — ультралегковесный сторожевой сервис (Watchdog) для Windows в системном трее, работающий **полностью без прав администратора**. Автоматически восстанавливает разорванные корпоративные VPN-соединения в фоне, избавляя от рутинных ручных переподключений и потери фокуса.
+[🇷🇺 Читать на русском](README.ru.md) | [🇬🇧 English](README.md)
+
+> **VPN Guardian** is an ultra-lightweight Windows system tray watchdog that runs **entirely without administrator privileges**. It automatically detects drops in corporate VPN connections and silently reconnects in the background, keeping your work sessions uninterrupted.
 
 ---
 
-## ⚡ Какую реальную проблему решает проект?
+## ⚡ The Real Problems It Solves
 
-### 1. Отсутствие прав администратора на корпоративных ПК (Главная боль)
-На рабочих ноутбуках и офисных машинах у пользователей почти никогда **нет прав локального администратора**. 
-Из-за этого «ванильные» решения не работают:
-- ❌ Нельзя установить сторонние тяжелые VPN-менеджеры.
-- ❌ Нельзя установить системные драйверы, туннельные адаптеры или службы Windows.
-- ❌ Нельзя настроить задачи в Планировщике Windows с повышенными привилегиями.
+### 1. Lack of Administrator Rights on Corporate PCs (Primary Problem)
+On corporate and enterprise laptops, users almost never have **local administrator privileges (UAC)**.
+Standard solutions fail:
+- ❌ Cannot install third-party bloated VPN managers or kernel network drivers.
+- ❌ Cannot configure elevated background Windows Services.
+- ❌ Cannot schedule tasks with elevated privileges in Windows Task Scheduler.
 
-**VPN Guardian работает на 100% в пространстве пользователя (User Space):**
-- Не требует прав администратора (UAC).
-- Читает профили напрямую из пользовательской телефонной книги Windows (`rasphone.pbk`).
-- Управляет туннелем через встроенную штатную утилиту `rasdial`.
-- Запускается и работает автономно в трее пользователя.
+**VPN Guardian runs 100% in User Space:**
+- Zero administrator rights required.
+- Parses user-level Windows phonebook (`%APPDATA%\...\rasphone.pbk`) in under 0.05 ms.
+- Controls connections natively through built-in user-accessible `rasdial`.
+- Runs quietly in the user's system notification tray area.
 
-### 2. Постоянные обрывы и прерывание рабочего процесса
-Корпоративные VPN часто тихо разрываются (мигание Wi-Fi, смена IP, таймаут провайдера). В результате:
-- Падают SSH-сессии, прерываются `git fetch / git push`, отваливаются внутренние корпоративные порталы и базы данных.
-- Приходится постоянно отвлекаться от задач, открывать сетевые настройки и вручную нажимать «Подключить».
+### 2. Silent Disconnections Breaking Flow
+Corporate VPN tunnels often drop silently due to Wi-Fi fluctuations, ISP reconnects, or session timeouts:
+- Drops SSH sessions, terminates `git push / fetch`, breaks internal databases and web portals.
+- Forces you to stop working, open network settings, and manually click "Connect" dozens of times a day.
 
-**VPN Guardian берет удержание связи на себя:** автоматически фиксирует обрыв и прозрачно для вас поднимает туннель обратно за секунды.
+**VPN Guardian handles reconnection automatically:** instantly detects drops and restores the tunnel in seconds.
 
-### 3. Умная пауза при осознанном выключении (Встроенная фича)
-Приложение отличает аварийный сбой сети от намеренного выключения пользователем:
-- 🟢 **Автоконтроль:** следит за туннелем в фоне и спасает при обрывах.
-- ⚪ **Ручной режим (Пауза):** при клике *«⏹ Отключить VPN (ручная пауза)»* утилита корректно закрывает туннель и **замораживает мониторинг**, не пытаясь включить его обратно.
-- ⏸ **Временная пауза:** быстрая пауза автореконнекта на 30 минут или 1 час.
+### 3. Smart Pause on Deliberate Disconnect
+The application distinguishes between an accidental connection drop and your deliberate choice to disconnect:
+- 🟢 **Active Watchdog:** Monitors the tunnel and silently reconnects if an unexpected drop occurs.
+- ⚪ **Manual Paused Mode:** Clicking *«⏹ Disconnect VPN (Manual Pause)»* in the tray cleanly terminates the tunnel and **suspends the watchdog**. It will never fight you or reconnect until you explicitly click *«⚡ Connect»*.
+- ⏸ **Temporary Pause:** Quickly pause auto-reconnect for 30 minutes or 1 hour.
 
 ---
 
-## 📊 Архитектура и оптимизация
+## 📊 Architecture & State Workflow
 
 ```mermaid
-stateDiagram-v2
-    [*] --> MONITORING : Запуск (VPN активен)
-    [*] --> PAUSED : Запуск (VPN выключен)
+flowchart TD
+    classDef auto fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d;
+    classDef paused fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#1e293b;
+    classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
 
-    state MONITORING {
-        [*] --> CheckStatus
-        CheckStatus --> Connected : VPN активен (сон N сек)
-        CheckStatus --> Reconnecting : Обрыв сети!
-        Reconnecting --> Connected : Связь восстановлена
-        Reconnecting --> PAUSED : Превышен лимит попыток
-    }
+    A(["Start VPN Guardian"]):::start --> B{"VPN status on start"}:::start
+    
+    B -->|"Connected"| StateAuto["🟢 Active Watchdog\n(Background polling every 5s)"]:::auto
+    B -->|"Disconnected"| StatePaused["⚪ Paused / Manual Mode\n(Watchdog asleep)"]:::paused
 
-    MONITORING --> PAUSED : Клик "Отключить VPN" / "Пауза"
-    PAUSED --> MONITORING : Клик "Подключить и включить авторежим"
+    StateAuto -->|"Connection Dropped!"| StateReconnect["🟡 Reconnecting\n(Up to 10 retries, 4s delay)"]:::alert
+    StateReconnect -->|"Restored"| StateAuto
+    StateReconnect -->|"Retries Exhausted"| StatePaused
+
+    StateAuto -->|"Click 'Disconnect' / 'Pause'"| StatePaused
+    StatePaused -->|"Click 'Connect & Enable Watchdog'"| StateAuto
 ```
 
-- **Потребление RAM:** всего **8–12 МБ** (в отличие от 100+ МБ у Electron/Python).
-- **Потребление CPU:** **0.0%** в режиме ожидания (блокирующий цикл сообщений Win32 API `GetMessageW`).
-- **Zero CGO & Zero Runtime:** собран на чистом Go с прямыми системными вызовами (`shell32.dll`, `user32.dll`), без внешних зависимостей.
-- **Устойчивость к сбоям Explorer:** слушает системное событие Windows `TaskbarCreated` и мгновенно пересоздает иконку в трее при перезапуске рабочего стола.
+- **RAM Footprint:** Only **8–12 MB** (compared to 100+ MB for Electron/Python apps).
+- **CPU Usage:** **0.0%** in idle (blocking Win32 API `GetMessageW` message loop).
+- **Zero CGO & Zero Dependencies:** Pure Go standard library + Win32 syscalls (`shell32.dll`, `user32.dll`).
+- **Explorer Crash Resilience:** Listens for `TaskbarCreated` system broadcast to restore tray icon if `explorer.exe` restarts.
 
 ---
 
-## 🔌 Поддерживаемые клиенты и протоколы
+## 🔌 Supported Protocols & Clients
 
-| Адаптер | Поддерживаемые протоколы | Права администратора | Метод интеграции |
+| Adapter | Protocols | Admin Rights Needed? | Integration Method |
 |---|---|---|---|
-| **Windows Native (`rasdial`)** | SSTP, L2TP/IPSec, IKEv2, PPTP | ❌ **Не требуются (User Space)** | Windows RAS API / телефонная книга |
-| **WireGuard** | WireGuard Windows Client | Требуются только при установке службы | `/installtunnelservice` |
-| **OpenVPN** | OpenVPN GUI | Не требуются для запуска | CLI интерфейс (`openvpn-gui.exe`) |
+| **Windows Native (`rasdial`)** | SSTP, L2TP/IPSec, IKEv2, PPTP | ❌ **No (User Space)** | Windows RAS API / PBK phonebook |
+| **WireGuard** | WireGuard Windows Client | Only when creating service | `/installtunnelservice` |
+| **OpenVPN** | OpenVPN GUI | No for normal usage | CLI interface (`openvpn-gui.exe`) |
 
 ---
 
-## 🚀 Быстрый запуск
+## 🚀 Quick Start
 
-### 1. Скачать готовый бинарник
-Скачайте свежий `vpn-guardian.exe` со страницы [**Releases**](../../releases).
-Запустите файл двойным кликом — он сразу свернется в трей возле часов и подхватит ваши сохраненные корпоративные подключения.
+### 1. Prebuilt Binary
+Download the latest `vpn-guardian.exe` from [**Releases**](../../releases).
+Double-click to launch. It will immediately appear in your taskbar notification area next to the clock and auto-detect your configured Windows VPN connections.
 
-### 2. Сборка из исходников
+### 2. Build From Source
 ```powershell
 git clone https://github.com/MihailBezukladnikovISiP201/vpn-guardian.git
 cd vpn-guardian
@@ -92,12 +97,13 @@ go build -ldflags="-H=windowsgui" -o vpn-guardian.exe
 
 ---
 
-## ⚙️ Конфигурация (`config.json`)
+## ⚙️ Configuration (`config.json`)
 
-Настройки хранятся в `%APPDATA%\VPNGuardian\config.json` и открываются в 1 клик прямо из меню трея:
+Saved automatically in `%APPDATA%\VPNGuardian\config.json` and accessible in 1 click from the tray menu:
 
 ```json
 {
+  "language": "auto",
   "vpn_type": "rasdial",
   "vpn_name": "SG",
   "check_interval_seconds": 5,
@@ -106,39 +112,27 @@ go build -ldflags="-H=windowsgui" -o vpn-guardian.exe
   "auto_connect_at_start": false,
   "enable_notifications": true,
   "wireguard_config_path": "",
-  "openvpn_profile_name": "",
-  "donate_url": "https://boosty.to/your_profile",
-  "referral_url": "https://timeweb.cloud/?ref=your_ref_code"
+  "openvpn_profile_name": ""
 }
 ```
 
+*Set `"language": "en"` or `"language": "ru"` to force a specific UI language, or keep `"auto"` to match Windows display language.*
+
 ---
 
-## ⏰ Автозагрузка Windows (без админских прав)
+## ⏰ Windows Startup (Non-Admin)
 
-Чтобы утилита стартовала при входе пользователя в Windows:
+To start automatically upon user login:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\install-startup.ps1
 ```
-Для удаления из автозагрузки:
+To remove from startup:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\uninstall-startup.ps1
 ```
 
 ---
 
-## ☕ Поддержка автора и развитие проекта
+## 📄 License
 
-Если утилита сэкономила вам рабочее время и нервы:
-- **Boosty / CloudTips:** [boosty.to/your_profile](https://boosty.to)
-
-### 🌐 Надежные VPS для поднятия личного VPN
-Для стабильной удаленной работы рекомендуем проверенных провайдеров:
-- 👉 [**Timeweb Cloud**](https://timeweb.cloud) — VPS с предустановленным VPN в 1 клик.
-- 👉 [**Aeza**](https://aeza.net) — высокоскоростные каналы без лимита трафика.
-
----
-
-## 📄 Лицензия
-
-Распространяется под лицензией [MIT](LICENSE).
+Distributed under the [MIT License](LICENSE).

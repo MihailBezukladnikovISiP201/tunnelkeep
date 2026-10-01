@@ -68,9 +68,7 @@ const (
 	ID_RESUME        = 1005
 	ID_OPEN_CONFIG   = 1006
 	ID_OPEN_LOGS     = 1007
-	ID_DONATE        = 1008
-	ID_REFERRAL      = 1009
-	ID_EXIT          = 1010
+	ID_EXIT          = 1008
 )
 
 type NOTIFYICONDATAW struct {
@@ -272,23 +270,24 @@ func (t *TrayApp) addOrUpdateIcon() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
+	m := T()
 	state, pauseUntil, retryCount := t.stateMgr.GetState()
 	var tip string
 	var hIcon uintptr
 
 	switch state {
 	case StateConnected:
-		tip = fmt.Sprintf("VPN Guardian: Подключен (%s)\nАвтоконтроль активен", t.adapter.Name())
+		tip = fmt.Sprintf(m.TipConnected, t.adapter.Name())
 		hIcon = t.iconManager.ConnectedHIcon
 	case StateReconnecting:
-		tip = fmt.Sprintf("VPN Guardian: Переподключение к %s...\nПопытка %d", t.adapter.Name(), retryCount)
+		tip = fmt.Sprintf(m.TipReconnecting, t.adapter.Name(), retryCount)
 		hIcon = t.iconManager.ReconnectingHIcon
 	case StatePaused:
 		if !pauseUntil.IsZero() {
 			remain := time.Until(pauseUntil).Round(time.Minute)
-			tip = fmt.Sprintf("VPN Guardian: Пауза до %s (осталось %v)", pauseUntil.Format("15:04"), remain)
+			tip = fmt.Sprintf(m.TipPausedUntil, pauseUntil.Format("15:04"), remain)
 		} else {
-			tip = fmt.Sprintf("VPN Guardian: Ручной режим (VPN выключен)\nАвтореконнект спит")
+			tip = m.TipPaused
 		}
 		hIcon = t.iconManager.PausedHIcon
 	}
@@ -342,41 +341,32 @@ func (t *TrayApp) showContextMenu(hwnd uintptr) {
 	}
 	defer procDestroyMenu.Call(hMenu)
 
+	m := T()
 	state, pauseUntil, _ := t.stateMgr.GetState()
 
 	// Header
-	statusStr := fmt.Sprintf("Статус: %s", state.String())
+	statusStr := state.String()
 	if state == StatePaused && !pauseUntil.IsZero() {
-		statusStr = fmt.Sprintf("Пауза до %s", pauseUntil.Format("15:04"))
+		statusStr = fmt.Sprintf(m.StatusPausedUntil, pauseUntil.Format("15:04"))
 	}
-	appendMenuItem(hMenu, MF_STRING|MF_DISABLED, ID_STATUS_HEADER, fmt.Sprintf("VPN Guardian [%s] • %s", t.adapter.Name(), statusStr))
+	appendMenuItem(hMenu, MF_STRING|MF_DISABLED, ID_STATUS_HEADER, fmt.Sprintf("VPN Guardian [%s] • %s: %s", t.adapter.Name(), m.StatusHeader, statusStr))
 	appendMenuItem(hMenu, MF_SEPARATOR, 0, "")
 
 	// Quick controls
 	if state == StatePaused {
-		appendMenuItem(hMenu, MF_STRING, ID_CONNECT_AUTO, "⚡ Подключить и включить авторежим")
-		appendMenuItem(hMenu, MF_STRING, ID_RESUME, "▶ Возобновить автоконтроль")
+		appendMenuItem(hMenu, MF_STRING, ID_CONNECT_AUTO, m.MenuConnectAuto)
+		appendMenuItem(hMenu, MF_STRING, ID_RESUME, m.MenuResume)
 	} else {
-		appendMenuItem(hMenu, MF_STRING, ID_DISCONNECT, "⏹ Отключить VPN (ручная пауза)")
-		appendMenuItem(hMenu, MF_STRING, ID_PAUSE_30M, "⏸ Пауза автореконнекта на 30 мин")
-		appendMenuItem(hMenu, MF_STRING, ID_PAUSE_1H, "⏸ Пауза автореконнекта на 1 час")
+		appendMenuItem(hMenu, MF_STRING, ID_DISCONNECT, m.MenuDisconnect)
+		appendMenuItem(hMenu, MF_STRING, ID_PAUSE_30M, m.MenuPause30m)
+		appendMenuItem(hMenu, MF_STRING, ID_PAUSE_1H, m.MenuPause1h)
 	}
 
 	appendMenuItem(hMenu, MF_SEPARATOR, 0, "")
-	appendMenuItem(hMenu, MF_STRING, ID_OPEN_CONFIG, "⚙ Настройки (config.json)")
-	appendMenuItem(hMenu, MF_STRING, ID_OPEN_LOGS, "📄 Открыть лог")
-
+	appendMenuItem(hMenu, MF_STRING, ID_OPEN_CONFIG, m.MenuOpenConfig)
+	appendMenuItem(hMenu, MF_STRING, ID_OPEN_LOGS, m.MenuOpenLogs)
 	appendMenuItem(hMenu, MF_SEPARATOR, 0, "")
-	// Indirect monetization / Referral links
-	if t.cfg.DonateURL != "" {
-		appendMenuItem(hMenu, MF_STRING, ID_DONATE, "☕ Поддержать автора (Донат)")
-	}
-	if t.cfg.ReferralURL != "" {
-		appendMenuItem(hMenu, MF_STRING, ID_REFERRAL, "🌐 Быстрый VPS для своего VPN")
-	}
-
-	appendMenuItem(hMenu, MF_SEPARATOR, 0, "")
-	appendMenuItem(hMenu, MF_STRING, ID_EXIT, "❌ Закрыть приложение")
+	appendMenuItem(hMenu, MF_STRING, ID_EXIT, m.MenuExit)
 
 	var pt POINT
 	procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
@@ -397,6 +387,7 @@ func (t *TrayApp) showContextMenu(hwnd uintptr) {
 }
 
 func (t *TrayApp) handleMenuCommand(cmd uint32) {
+	m := T()
 	switch cmd {
 	case ID_CONNECT_AUTO:
 		appLogger.Logf("Пользователь выбрал: Подключить и включить авторежим")
@@ -404,10 +395,10 @@ func (t *TrayApp) handleMenuCommand(cmd uint32) {
 		go func() {
 			if err := t.adapter.Connect(); err != nil {
 				appLogger.Logf("Ошибка ручного подключения: %v", err)
-				t.ShowBalloon("Ошибка подключения", err.Error(), true)
+				t.ShowBalloon(m.BalloonErrorTitle, err.Error(), true)
 			} else {
 				appLogger.Logf("VPN успешно подключен вручную")
-				t.ShowBalloon("VPN Guardian", "Подключение к "+t.adapter.Name()+" установлено", false)
+				t.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonReconnected, t.adapter.Name()), false)
 			}
 		}()
 
@@ -420,41 +411,31 @@ func (t *TrayApp) handleMenuCommand(cmd uint32) {
 			} else {
 				appLogger.Logf("VPN отключен пользователем")
 			}
-			t.ShowBalloon("VPN Guardian", "VPN отключен. Автореконнект приостановлен.", false)
+			t.ShowBalloon("VPN Guardian", m.BalloonDisconnect, false)
 		}()
 
 	case ID_PAUSE_30M:
 		until := time.Now().Add(30 * time.Minute)
 		appLogger.Logf("Автореконнект приостановлен на 30 минут (до %s)", until.Format("15:04:05"))
 		t.stateMgr.SetPaused(until)
-		t.ShowBalloon("VPN Guardian", fmt.Sprintf("Автореконнект отключен на 30 минут (до %s)", until.Format("15:04")), false)
+		t.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonPaused30m, until.Format("15:04")), false)
 
 	case ID_PAUSE_1H:
 		until := time.Now().Add(1 * time.Hour)
 		appLogger.Logf("Автореконнект приостановлен на 1 час (до %s)", until.Format("15:04:05"))
 		t.stateMgr.SetPaused(until)
-		t.ShowBalloon("VPN Guardian", fmt.Sprintf("Автореконнект отключен на 1 час (до %s)", until.Format("15:04")), false)
+		t.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonPaused1h, until.Format("15:04")), false)
 
 	case ID_RESUME:
 		appLogger.Logf("Пользователь возобновил автоконтроль")
 		t.stateMgr.SetConnected()
-		t.ShowBalloon("VPN Guardian", "Автореконнект возобновлен", false)
+		t.ShowBalloon("VPN Guardian", m.BalloonResumed, false)
 
 	case ID_OPEN_CONFIG:
 		go exec.Command("notepad.exe", getConfigPath()).Start()
 
 	case ID_OPEN_LOGS:
 		go exec.Command("notepad.exe", appLogger.GetPath()).Start()
-
-	case ID_DONATE:
-		if t.cfg.DonateURL != "" {
-			go exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", t.cfg.DonateURL).Start()
-		}
-
-	case ID_REFERRAL:
-		if t.cfg.ReferralURL != "" {
-			go exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", t.cfg.ReferralURL).Start()
-		}
 
 	case ID_EXIT:
 		appLogger.Logf("Выход из приложения по запросу пользователя")

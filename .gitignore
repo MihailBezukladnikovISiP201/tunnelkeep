@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+*.zip
 
 # Test scripts and temporary build artifacts
 test_*.go
