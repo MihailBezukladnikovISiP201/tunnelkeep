@@ -183,7 +183,7 @@ func (t *TrayApp) Run() error {
 	msgId, _, _ := procRegisterWindowMessage.Call(uintptr(unsafe.Pointer(taskbarStr)))
 	taskbarCreatedMsg = uint32(msgId)
 
-	className, _ := syscall.UTF16PtrFromString("VPNGuardianTrayWindowClass")
+	className, _ := syscall.UTF16PtrFromString("TunnelKeepTrayWindowClass")
 	hInstance, _, _ := procGetModuleHandle.Call(0)
 
 	wndClass := WNDCLASSEXW{
@@ -198,7 +198,7 @@ func (t *TrayApp) Run() error {
 		return fmt.Errorf("RegisterClassEx failed: %v", err)
 	}
 
-	windowName, _ := syscall.UTF16PtrFromString("VPNGuardianHiddenWindow")
+	windowName, _ := syscall.UTF16PtrFromString("TunnelKeepHiddenWindow")
 	hwnd, _, err := procCreateWindowEx.Call(
 		0,
 		uintptr(unsafe.Pointer(className)),
@@ -222,7 +222,7 @@ func (t *TrayApp) Run() error {
 		UCallbackMessage: WM_TRAY_CALLBACK,
 		HIcon:            t.iconManager.PausedHIcon,
 	}
-	copy(t.nid.SzTip[:], toUTF16Fixed(fmt.Sprintf("VPN Guardian [%s]", t.adapter.Name()), 128))
+	copy(t.nid.SzTip[:], toUTF16Fixed(fmt.Sprintf("TunnelKeep [%s]", t.adapter.Name()), 128))
 
 	// Initial icon registration attempt
 	t.addOrUpdateIcon()
@@ -349,7 +349,7 @@ func (t *TrayApp) showContextMenu(hwnd uintptr) {
 	if state == StatePaused && !pauseUntil.IsZero() {
 		statusStr = fmt.Sprintf(m.StatusPausedUntil, pauseUntil.Format("15:04"))
 	}
-	appendMenuItem(hMenu, MF_STRING|MF_DISABLED, ID_STATUS_HEADER, fmt.Sprintf("VPN Guardian [%s] • %s: %s", t.adapter.Name(), m.StatusHeader, statusStr))
+	appendMenuItem(hMenu, MF_STRING|MF_DISABLED, ID_STATUS_HEADER, fmt.Sprintf("TunnelKeep [%s] • %s: %s", t.adapter.Name(), m.StatusHeader, statusStr))
 	appendMenuItem(hMenu, MF_SEPARATOR, 0, "")
 
 	// Quick controls
@@ -398,7 +398,7 @@ func (t *TrayApp) handleMenuCommand(cmd uint32) {
 				t.ShowBalloon(m.BalloonErrorTitle, err.Error(), true)
 			} else {
 				appLogger.Logf("VPN успешно подключен вручную")
-				t.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonReconnected, t.adapter.Name()), false)
+				t.ShowBalloon("TunnelKeep", fmt.Sprintf(m.BalloonReconnected, t.adapter.Name()), false)
 			}
 		}()
 
@@ -411,25 +411,25 @@ func (t *TrayApp) handleMenuCommand(cmd uint32) {
 			} else {
 				appLogger.Logf("VPN отключен пользователем")
 			}
-			t.ShowBalloon("VPN Guardian", m.BalloonDisconnect, false)
+			t.ShowBalloon("TunnelKeep", m.BalloonDisconnect, false)
 		}()
 
 	case ID_PAUSE_30M:
 		until := time.Now().Add(30 * time.Minute)
 		appLogger.Logf("Автореконнект приостановлен на 30 минут (до %s)", until.Format("15:04:05"))
 		t.stateMgr.SetPaused(until)
-		t.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonPaused30m, until.Format("15:04")), false)
+		t.ShowBalloon("TunnelKeep", fmt.Sprintf(m.BalloonPaused30m, until.Format("15:04")), false)
 
 	case ID_PAUSE_1H:
 		until := time.Now().Add(1 * time.Hour)
 		appLogger.Logf("Автореконнект приостановлен на 1 час (до %s)", until.Format("15:04:05"))
 		t.stateMgr.SetPaused(until)
-		t.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonPaused1h, until.Format("15:04")), false)
+		t.ShowBalloon("TunnelKeep", fmt.Sprintf(m.BalloonPaused1h, until.Format("15:04")), false)
 
 	case ID_RESUME:
 		appLogger.Logf("Пользователь возобновил автоконтроль")
 		t.stateMgr.SetConnected()
-		t.ShowBalloon("VPN Guardian", m.BalloonResumed, false)
+		t.ShowBalloon("TunnelKeep", m.BalloonResumed, false)
 
 	case ID_OPEN_CONFIG:
 		go exec.Command("notepad.exe", getConfigPath()).Start()

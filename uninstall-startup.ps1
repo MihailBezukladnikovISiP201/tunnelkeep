@@ -1,5 +1,8 @@
 $startupPath = [System.Environment]::GetFolderPath('Startup')
-$shortcutPath = Join-Path $startupPath "VPN Guardian.lnk"
+$shortcutPath = Join-Path $startupPath "TunnelKeep.lnk"
+$oldShortcut = Join-Path $startupPath "VPN Guardian.lnk"
+
+if (Test-Path $oldShortcut) { Remove-Item -Force $oldShortcut }
 
 if (Test-Path $shortcutPath) {
     Remove-Item -Force $shortcutPath

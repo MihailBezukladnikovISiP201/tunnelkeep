@@ -26,12 +26,12 @@ func initLogger() (*Logger, error) {
 	if appData == "" {
 		appData = os.TempDir()
 	}
-	dir := filepath.Join(appData, "VPNGuardian")
+	dir := filepath.Join(appData, "TunnelKeep")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
 
-	logPath := filepath.Join(dir, "guardian.log")
+	logPath := filepath.Join(dir, "tunnelkeep.log")
 	file, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err

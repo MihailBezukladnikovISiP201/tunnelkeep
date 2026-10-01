@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.singleton.1.6.0.schema.json
+PackageIdentifier: MihailBezukladnikovISiP201.TunnelKeep
+PackageVersion: 1.0.0
+PackageLocale: ru-RU
+Publisher: Mikhail Bezukladnikov
+PublisherUrl: https://github.com/MihailBezukladnikovISiP201
+PublisherSupportUrl: https://github.com/MihailBezukladnikovISiP201/tunnelkeep/issues
+PackageName: TunnelKeep
+PackageUrl: https://github.com/MihailBezukladnikovISiP201/tunnelkeep
+License: MIT
+LicenseUrl: https://github.com/MihailBezukladnikovISiP201/tunnelkeep/blob/main/LICENSE
+ShortDescription: Легковесный сторожевой сервис (Watchdog) в трее Windows для автореконнекта VPN туннелей без прав администратора.
+Description: |
+  TunnelKeep автоматически удерживает стабильное VPN-соединение (Windows RAS SSTP/L2TP, WireGuard, OpenVPN)
+  при обрывах сети полностью в пространстве пользователя (без прав локального администратора).
+  Предотвращает потерю фокуса и рутинные ручные переподключения. Поддерживает режим умной паузы.
+  Потребляет ~8-12 МБ RAM и 0.0% CPU.
+Tags:
+  - vpn
+  - tunnelkeep
+  - watchdog
+  - reconnect
+  - systray
+  - non-admin
+  - wireguard
+  - openvpn
+  - sstp
+Installers:
+  - Architecture: x64
+    InstallerType: portable
+    InstallerUrl: https://github.com/MihailBezukladnikovISiP201/tunnelkeep/releases/download/v1.0.0/tunnelkeep-windows-amd64.exe
+    InstallerSha256: B96CE1560C48C2F9BCD2EE4BA0F3437CE48B34065C0C7AE556A6D594E5D13463
+    Commands:
+      - tunnelkeep
+ManifestType: singleton
+ManifestVersion: 1.6.0

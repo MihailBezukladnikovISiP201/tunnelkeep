@@ -1,4 +1,4 @@
-# VPN Guardian 🛡️
+# TunnelKeep 🛡️
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev)
@@ -8,7 +8,7 @@
 
 [🇷🇺 Читать на русском](README.ru.md) | [🇬🇧 English](README.md)
 
-> **VPN Guardian** is an ultra-lightweight Windows system tray watchdog that runs **entirely without administrator privileges**. It automatically detects drops in corporate VPN connections and silently reconnects in the background, keeping your work sessions uninterrupted.
+> **TunnelKeep** is an ultra-lightweight Windows system tray watchdog that runs **entirely without administrator privileges**. It automatically detects drops in corporate VPN connections and silently reconnects in the background, keeping your work sessions uninterrupted.
 
 ---
 
@@ -21,7 +21,7 @@ Standard solutions fail:
 - ❌ Cannot configure elevated background Windows Services.
 - ❌ Cannot schedule tasks with elevated privileges in Windows Task Scheduler.
 
-**VPN Guardian runs 100% in User Space:**
+**TunnelKeep runs 100% in User Space:**
 - Zero administrator rights required.
 - Parses user-level Windows phonebook (`%APPDATA%\...\rasphone.pbk`) in under 0.05 ms.
 - Controls connections natively through built-in user-accessible `rasdial`.
@@ -32,7 +32,7 @@ Corporate VPN tunnels often drop silently due to Wi-Fi fluctuations, ISP reconne
 - Drops SSH sessions, terminates `git push / fetch`, breaks internal databases and web portals.
 - Forces you to stop working, open network settings, and manually click "Connect" dozens of times a day.
 
-**VPN Guardian handles reconnection automatically:** instantly detects drops and restores the tunnel in seconds.
+**TunnelKeep handles reconnection automatically:** instantly detects drops and restores the tunnel in seconds.
 
 ### 3. Smart Pause on Deliberate Disconnect
 The application distinguishes between an accidental connection drop and your deliberate choice to disconnect:
@@ -51,7 +51,7 @@ flowchart TD
     classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f;
     classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
 
-    A(["Start VPN Guardian"]):::start --> B{"VPN status on start"}:::start
+    A(["Start TunnelKeep"]):::start --> B{"VPN status on start"}:::start
     
     B -->|"Connected"| StateAuto["🟢 Active Watchdog\n(Background polling every 5s)"]:::auto
     B -->|"Disconnected"| StatePaused["⚪ Paused / Manual Mode\n(Watchdog asleep)"]:::paused
@@ -84,22 +84,22 @@ flowchart TD
 ## 🚀 Quick Start
 
 ### 1. Prebuilt Binary
-Download the latest `vpn-guardian.exe` from [**Releases**](../../releases).
+Download the latest `tunnelkeep.exe` from [**Releases**](https://github.com/MihailBezukladnikovISiP201/tunnelkeep/releases).
 Double-click to launch. It will immediately appear in your taskbar notification area next to the clock and auto-detect your configured Windows VPN connections.
 
 ### 2. Build From Source
 ```powershell
-git clone https://github.com/MihailBezukladnikovISiP201/vpn-guardian.git
-cd vpn-guardian
-go build -ldflags="-H=windowsgui" -o vpn-guardian.exe
-.\vpn-guardian.exe
+git clone https://github.com/MihailBezukladnikovISiP201/tunnelkeep.git
+cd tunnelkeep
+go build -ldflags="-H=windowsgui" -o tunnelkeep.exe
+.\tunnelkeep.exe
 ```
 
 ---
 
 ## ⚙️ Configuration (`config.json`)
 
-Saved automatically in `%APPDATA%\VPNGuardian\config.json` and accessible in 1 click from the tray menu:
+Saved automatically in `%APPDATA%\TunnelKeep\config.json` and accessible in 1 click from the tray menu:
 
 ```json
 {

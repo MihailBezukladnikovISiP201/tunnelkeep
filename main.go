@@ -56,7 +56,7 @@ func main() {
 
 	adapter := NewVPNAdapter(cfg)
 
-	logger.Logf("=== Запуск VPN Guardian v1.0.0 ===")
+	logger.Logf("=== Запуск TunnelKeep v1.0.0 ===")
 	logger.Logf("Язык интерфейса: [%s], Адаптер: [%s], Имя/Цель: [%s]", currentLang, cfg.VPNType, adapter.Name())
 	logger.Logf("Конфигурация: %s", getConfigPath())
 
@@ -101,7 +101,7 @@ func main() {
 		logger.Logf("Фатальная ошибка Tray: %v", err)
 	}
 
-	logger.Logf("=== VPN Guardian остановлен ===")
+	logger.Logf("=== TunnelKeep остановлен ===")
 }
 
 func runWatchdog(adapter VPNAdapter, cfg Config, stateMgr *StateManager, tray *TrayApp) {
@@ -131,7 +131,7 @@ func runWatchdog(adapter VPNAdapter, cfg Config, stateMgr *StateManager, tray *T
 		m := T()
 		// VPN connection dropped unexpectedly
 		appLogger.Logf("ВНИМАНИЕ: Обнаружен разрыв соединения с VPN [%s]!", adapter.Name())
-		tray.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonConnDropped, adapter.Name()), true)
+		tray.ShowBalloon("TunnelKeep", fmt.Sprintf(m.BalloonConnDropped, adapter.Name()), true)
 
 		reconnected := false
 		for attempt := 1; attempt <= maxRetries; attempt++ {
@@ -150,7 +150,7 @@ func runWatchdog(adapter VPNAdapter, cfg Config, stateMgr *StateManager, tray *T
 				if isUp, _ := adapter.IsConnected(); isUp {
 					appLogger.Logf("VPN [%s] успешно переподключен (попытка %d)!", adapter.Name(), attempt)
 					stateMgr.SetConnected()
-					tray.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonReconnected, adapter.Name()), false)
+					tray.ShowBalloon("TunnelKeep", fmt.Sprintf(m.BalloonReconnected, adapter.Name()), false)
 					reconnected = true
 					break
 				}
@@ -161,7 +161,7 @@ func runWatchdog(adapter VPNAdapter, cfg Config, stateMgr *StateManager, tray *T
 
 		if !reconnected && !stateMgr.IsPaused() {
 			appLogger.Logf("Не удалось восстановить связь после %d попыток. Переход в паузу.", maxRetries)
-			tray.ShowBalloon("VPN Guardian", fmt.Sprintf(m.BalloonRetriesFail, adapter.Name(), maxRetries), true)
+			tray.ShowBalloon("TunnelKeep", fmt.Sprintf(m.BalloonRetriesFail, adapter.Name(), maxRetries), true)
 			stateMgr.SetPaused(time.Time{})
 		}
 	}

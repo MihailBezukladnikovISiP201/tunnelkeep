@@ -1,4 +1,4 @@
-name: Release VPN Guardian
+name: Release TunnelKeep
 
 on:
   push:
@@ -16,13 +16,13 @@ jobs:
         include:
           - goos: windows
             goarch: amd64
-            output_name: vpn-guardian-windows-amd64.exe
+            output_name: tunnelkeep-windows-amd64.exe
           - goos: windows
             goarch: '386'
-            output_name: vpn-guardian-windows-386.exe
+            output_name: tunnelkeep-windows-386.exe
           - goos: windows
             goarch: arm64
-            output_name: vpn-guardian-windows-arm64.exe
+            output_name: tunnelkeep-windows-arm64.exe
 
     steps:
       - name: Checkout Code

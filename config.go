@@ -53,7 +53,7 @@ func loadOrCreateConfig(detectedVPN string) (Config, error) {
 	if appData == "" {
 		appData = os.TempDir()
 	}
-	dir := filepath.Join(appData, "VPNGuardian")
+	dir := filepath.Join(appData, "TunnelKeep")
 	_ = os.MkdirAll(dir, 0755)
 
 	cfgPath = filepath.Join(dir, "config.json")

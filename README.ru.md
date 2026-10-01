@@ -1,4 +1,4 @@
-# VPN Guardian 🛡️
+# TunnelKeep 🛡️
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev)
@@ -8,7 +8,7 @@
 
 [🇬🇧 Read in English](README.md) | [🇷🇺 Русский](README.ru.md)
 
-> **VPN Guardian** — ультралегковесный сторожевой сервис (Watchdog) для Windows в системном трее, работающий **полностью без прав администратора**. Автоматически восстанавливает разорванные корпоративные VPN-соединения в фоне, избавляя от рутинных ручных переподключений и потери фокуса.
+> **TunnelKeep** — ультралегковесный сторожевой сервис (Watchdog) для Windows в системном трее, работающий **полностью без прав администратора**. Автоматически восстанавливает разорванные корпоративные VPN-соединения в фоне, избавляя от рутинных ручных переподключений и потери фокуса.
 
 ---
 
@@ -21,7 +21,7 @@
 - ❌ Нельзя установить системные драйверы, туннельные адаптеры или службы Windows.
 - ❌ Нельзя настроить задачи в Планировщике Windows с повышенными привилегиями.
 
-**VPN Guardian работает на 100% в пространстве пользователя (User Space):**
+**TunnelKeep работает на 100% в пространстве пользователя (User Space):**
 - Не требует прав администратора (UAC).
 - Читает профили напрямую из пользовательской телефонной книги Windows (`rasphone.pbk`) за 0.05 мс.
 - Управляет туннелем через встроенную штатную утилиту `rasdial`.
@@ -32,7 +32,7 @@
 - Падают SSH-сессии, прерываются `git fetch / git push`, отваливаются внутренние корпоративные порталы и базы данных.
 - Приходится постоянно отвлекаться от задач, открывать сетевые настройки и вручную нажимать «Подключить».
 
-**VPN Guardian берет удержание связи на себя:** автоматически фиксирует обрыв и прозрачно для вас поднимает туннель обратно за секунды.
+**TunnelKeep берет удержание связи на себя:** автоматически фиксирует обрыв и прозрачно для вас поднимает туннель обратно за секунды.
 
 ### 3. Умная пауза при осознанном выключении (Встроенная фича)
 Приложение отличает аварийный сбой сети от намеренного выключения пользователем:
@@ -51,7 +51,7 @@ flowchart TD
     classDef alert fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f;
     classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
 
-    A(["Запуск VPN Guardian"]):::start --> B{"Статус VPN при старте"}:::start
+    A(["Запуск TunnelKeep"]):::start --> B{"Статус VPN при старте"}:::start
     
     B -->|"Подключен"| StateAuto["🟢 Режим: Автоконтроль\n(Мониторинг раз в 5 сек)"]:::auto
     B -->|"Отключен"| StatePaused["⚪ Режим: Пауза\n(Автореконнект спит)"]:::paused
@@ -84,22 +84,22 @@ flowchart TD
 ## 🚀 Быстрый запуск
 
 ### 1. Скачать готовый бинарник
-Скачайте свежий `vpn-guardian.exe` со страницы [**Releases**](../../releases).
+Скачайте свежий `tunnelkeep.exe` со страницы [**Releases**](https://github.com/MihailBezukladnikovISiP201/tunnelkeep/releases).
 Запустите файл двойным кликом — он сразу свернется в трей возле часов и подхватит ваши сохраненные корпоративные подключения.
 
 ### 2. Сборка из исходников
 ```powershell
-git clone https://github.com/MihailBezukladnikovISiP201/vpn-guardian.git
-cd vpn-guardian
-go build -ldflags="-H=windowsgui" -o vpn-guardian.exe
-.\vpn-guardian.exe
+git clone https://github.com/MihailBezukladnikovISiP201/tunnelkeep.git
+cd tunnelkeep
+go build -ldflags="-H=windowsgui" -o tunnelkeep.exe
+.\tunnelkeep.exe
 ```
 
 ---
 
 ## ⚙️ Конфигурация (`config.json`)
 
-Настройки хранятся в `%APPDATA%\VPNGuardian\config.json` и открываются в 1 клик прямо из меню трея:
+Настройки хранятся в `%APPDATA%\TunnelKeep\config.json` и открываются в 1 клик прямо из меню трея:
 
 ```json
 {
