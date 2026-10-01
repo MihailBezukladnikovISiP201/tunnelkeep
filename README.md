@@ -64,7 +64,8 @@ flowchart TD
     StatePaused -->|"Click 'Connect & Enable Watchdog'"| StateAuto
 ```
 
-- **RAM Footprint:** Only **8–12 MB** (compared to 100+ MB for Electron/Python apps).
+- **RAM Footprint:** **~8–16 MB** (scales with CPU core count: ~8 MB on 4-core laptops, ~15 MB on 16-core workstations due to Go runtime `GOMAXPROCS` thread stacks; the actual application heap is only ~2.5 MB).
+- **Binary Size:** **~5.0 MB** with standard symbol tables intact to ensure compliance with corporate EDR and antiviruses (Kaspersky, Defender), or ~2.5 MB if stripped.
 - **CPU Usage:** **0.0%** in idle (blocking Win32 API `GetMessageW` message loop).
 - **Zero CGO & Zero Dependencies:** Pure Go standard library + Win32 syscalls (`shell32.dll`, `user32.dll`).
 - **Explorer Crash Resilience:** Listens for `TaskbarCreated` system broadcast to restore tray icon if `explorer.exe` restarts.
